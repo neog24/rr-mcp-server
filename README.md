@@ -156,7 +156,3 @@ run_cmd("reverse-step")
 - [loguru](https://github.com/Delgan/loguru) - Logging
 - [pydantic](https://docs.pydantic.dev/) - Data validation
 - [pygdbmi](https://github.com/cs01/pygdbmi) - GDB Machine Interface communication
-
-## License
-
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
