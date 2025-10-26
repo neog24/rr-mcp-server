@@ -1,15 +1,9 @@
 import os
 import sys
 from typing import Optional, List, Dict, Tuple
-import logging, json, time
-from pygdbmi.IoManager import logger
+import json, time
 from pygdbmi.gdbcontroller import GdbController
-
-logging.basicConfig(
-    filename='server.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s',
-    filemode='w')
+from loguru import logger
 
 class RRController(GdbController):
     NOTIFY = 'notify'
@@ -19,14 +13,13 @@ class RRController(GdbController):
         self.trace_dir = trace_dir
         command = ['rr', 'replay', '-i=mi', '--debugger-option="--interpreter=mi3"',  trace_dir]
         super().__init__(command=command, time_to_check_for_additional_output_sec=time_to_check_for_additional_output_sec)
-        self.logger = logging.getLogger('rr_controller')
         self._wait([(RRController.NOTIFY, RRController.STOPPED)])
         self.status = None
 
     def _check_wait_result(self, resps:List[Dict], targets:List[Tuple[str, str]]) -> List[Dict]:
         for resp in resps:
             resp_typ = (resp['type'], resp['message'])
-            self.logger.debug(f'checking {resp_typ} against {targets}')
+            logger.debug(f'checking {resp_typ} against {targets}')
             if resp_typ in targets:
                 return True
         return False
@@ -36,7 +29,7 @@ class RRController(GdbController):
         while True:
             responses = self.get_gdb_response(timeout_sec=0.5, raise_error_on_timeout=False)
             if responses:
-                self.logger.info(f'responses: {json.dumps(responses, indent=2)}')
+                logger.info(f'responses: {json.dumps(responses, indent=2)}')
                 resps.extend(responses)
             else:
                 continue
@@ -48,8 +41,8 @@ class RRController(GdbController):
 
     def run_cmd(self, cmd:str) -> List[Dict]:
         resps = self.write(cmd)
-        self.logger.info(f'running cmd: {cmd}')
-        self.logger.info(f'responses: {json.dumps(resps, indent=2)}')
+        logger.info(f'running cmd: {cmd}')
+        logger.info(f'responses: {json.dumps(resps, indent=2)}')
         return resps
 
     def _run_cmd_and_wait(self, cmd:str, targets:List[Tuple[str, str]]) -> List[Dict]:
