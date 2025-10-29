@@ -10,3 +10,6 @@ wheels/
 .venv
 
 *.log
+core.*
+crash.c
+crash

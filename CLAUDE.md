@@ -21,10 +21,11 @@ This is an MCP (Model Context Protocol) server that provides tools for controlli
 ### RRMcpServer (`rr_mcp_server.py`)
 - Built on FastMCP framework
 - Maintains singleton `RRController` instance per server
-- Exposes two MCP tools:
+- Exposes three MCP tools:
   1. `rr_replay(rr_trace_dir)`: Start/restart replay session for a trace directory
   2. `run_cmd(cmd)`: Execute GDB/rr commands during active replay session
-- Runs as HTTP server on `0.0.0.0:8000`
+  3. `read_file(file_path, start_line, end_line)`: Read specific lines from a file (useful for inspecting source during debugging)
+- Runs as HTTP server on `0.0.0.0:8001`
 
 ### State Management
 - Server maintains single active replay session (`self.rr_ctrl`)
@@ -38,7 +39,7 @@ This is an MCP (Model Context Protocol) server that provides tools for controlli
 # Development mode (direct execution)
 python rr_mcp_server.py
 
-# The server starts on http://0.0.0.0:8000
+# The server starts on http://0.0.0.0:8001
 ```
 
 ### Testing RRController standalone
@@ -48,15 +49,25 @@ python rr_controller.py
 
 # Use specific trace directory
 python rr_controller.py /path/to/trace/dir
+
+# The standalone test runs "continue" command and then exits
 ```
 
 ### Dependencies
 ```bash
-# Install dependencies using uv
+# Install dependencies using uv (recommended)
 uv sync
 
 # Or with pip
 pip install -e .
+```
+
+### Recording a trace for testing
+```bash
+# Record a program execution
+rr record ./your-program arg1 arg2
+
+# The trace will be saved to ~/.local/share/rr/latest-trace
 ```
 
 ## Key Technical Details
@@ -65,6 +76,7 @@ pip install -e .
 - Commands are sent as MI commands through `pygdbmi`
 - Responses are JSON dictionaries with `type` and `message` fields
 - Critical response types: `notify/stopped` indicates execution stopped
+- `run_cmd()` returns raw GDB/MI responses as `List[Dict]`, not processed strings
 
 ### Logging
 - Uses `loguru` for structured logging
@@ -83,3 +95,4 @@ When extending functionality:
 - Check `self.rr_ctrl` existence before running commands
 - Log responses at INFO level for debugging GDB/MI interactions
 - Handle session cleanup with `exit()` before starting new sessions
+- The `_wait()` method polls for specific response types; use it when you need to ensure command completion
